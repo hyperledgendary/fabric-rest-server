@@ -1,0 +1,48 @@
+# Base build from node:carbon
+FROM node:carbon as base
+
+WORKDIR /app
+
+# ---- Dependencies ----
+FROM base AS dependencies  
+COPY package*.json ./
+RUN npm install
+
+# ---- Copy Files/Build ----
+FROM dependencies AS build  
+WORKDIR /app
+COPY src ./src/
+COPY tsconfig.json ./
+COPY tslint.json ./
+
+# Build the core TypeScript files
+RUN npm run build
+
+# --- Build release with Alpine ----
+FROM node:8.9-alpine AS builder  
+# Create app directory
+WORKDIR /app
+
+COPY --from=build /app/dist ./dist/
+COPY package.json ./
+
+# Add the compilation tools required for alpine
+RUN apk add --no-cache --virtual .gyp python make g++
+
+# Install app dependencies in production mode
+RUN npm install --only=production
+
+# Assemble final release image
+FROM node:8.9-alpine AS release  
+
+WORKDIR /app
+COPY --from=builder /app/dist ./dist/
+COPY --from=builder /app/node_modules ./node_modules/
+
+# Standard port to be exposed
+EXPOSE 3000
+ENV  NODE_ENV production
+
+# Entrypoint for the REST, setting port as 3000, when docker is run port map then if wished
+ENTRYPOINT [ "node","dist/cli.js"]
+CMD ["--port","3000"]
