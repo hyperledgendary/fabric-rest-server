@@ -63,6 +63,7 @@ export default class StarterServer {
         LOG(`Starting the FabricProxy`);
         this.fabricProxy = new FabricProxy(this.config.fabric);
         await this.fabricProxy.setup();
+        await this.fabricProxy.connectToContract();
 
         // create express and setup basic routing
         this.app = express();

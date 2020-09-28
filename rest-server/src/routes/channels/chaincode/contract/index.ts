@@ -38,9 +38,9 @@ export class ContractRouter {
             if (metadataComponents.schemas.hasOwnProperty(s)) {
                 const schema = metadataComponents.schemas[s] as Schema;
                 const props = {};
-                schema.properties.forEach((e) => {
-                    props[e.name] = e.schema;
-                });
+                for (const [propName, propSchema] of Object.entries(schema.properties)) {
+                    props[propName] = propSchema;
+                }
 
                 components.schemas[s] = metadataComponents.schemas[s];
                 components.schemas[s].properties = props;
